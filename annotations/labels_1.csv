@@ -1,0 +1,17 @@
+label_name,bbox_x,bbox_y,bbox_width,bbox_height,image_name,image_width,image_height
+chair_seat_1,169,161,189,140,base_image_1.jpg,1920,1080
+chair_seat_2,370,161,204,138,base_image_1.jpg,1920,1080
+chair_seat_3,618,171,189,125,base_image_1.jpg,1920,1080
+chair_seat_4,822,169,209,130,base_image_1.jpg,1920,1080
+chair_seat_5,171,758,207,130,base_image_1.jpg,1920,1080
+chair_seat_6,396,756,199,128,base_image_1.jpg,1920,1080
+chair_seat_7,620,743,214,143,base_image_1.jpg,1920,1080
+chair_seat_8,840,746,214,135,base_image_1.jpg,1920,1080
+desk_area_1,163,317,209,209,base_image_1.jpg,1920,1080
+desk_area_2,388,314,197,209,base_image_1.jpg,1920,1080
+desk_area_3,610,314,197,212,base_image_1.jpg,1920,1080
+desk_area_4,827,322,202,202,base_image_1.jpg,1920,1080
+desk_area_5,153,546,222,189,base_image_1.jpg,1920,1080
+desk_area_6,383,541,204,194,base_image_1.jpg,1920,1080
+desk_area_7,605,539,214,189,base_image_1.jpg,1920,1080
+desk_area_8,830,534,209,191,base_image_1.jpg,1920,1080
