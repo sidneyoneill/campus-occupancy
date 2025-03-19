@@ -1,0 +1,9 @@
+label_name,bbox_x,bbox_y,bbox_width,bbox_height,image_name,image_width,image_height
+chair_1,153,100,222,202,frame_1334.jpg,1920,1080
+chair_2,380,102,207,199,frame_1334.jpg,1920,1080
+chair_3,597,92,225,207,frame_1334.jpg,1920,1080
+chair_4,830,92,194,204,frame_1334.jpg,1920,1080
+chair_5,166,756,235,204,frame_1334.jpg,1920,1080
+chair_6,403,743,202,197,frame_1334.jpg,1920,1080
+chair_7,620,740,197,197,frame_1334.jpg,1920,1080
+chair_8,830,738,209,197,frame_1334.jpg,1920,1080

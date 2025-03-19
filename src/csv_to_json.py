@@ -3,8 +3,8 @@ import json
 import os
 
 # Define paths
-csv_path = os.path.join("annotations", "labels_1.csv")   # Replace with your actual CSV filename
-json_path = os.path.join("annotations", "annotations.json")
+csv_path = os.path.join("annotations", "chair_locations_2.csv")   # Replace with your actual CSV filename
+json_path = os.path.join("annotations", "chair_locations_2.json")
 
 seat_data = {}  # e.g., {"seat1": {"chair": [x, y, w, h], "desk": [x, y, w, h]}, ...}
 

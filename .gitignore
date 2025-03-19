@@ -41,12 +41,6 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
-data/videos/*.MOV
-data/images/base/*.jpg
-data/images/frames/*.jpg
-data/images/test/*.jpg
-output/*.MOV
-output/*.csv
-output/*.txt
-models/*.pt
-models/*.pth
+data/
+output/
+models/
