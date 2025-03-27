@@ -23,3 +23,7 @@ main4.py
 - Add in threshold level to detect bags /coats
 - If confidence of chair deteciton is below a certain level vall it occupied
 - NEED TO DO - NOT SURE IF WILL WORK
+
+main5.py
+- Same as main4.py
+- Add in desk detection method - Guassian mask
