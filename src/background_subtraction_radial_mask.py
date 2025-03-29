@@ -112,8 +112,8 @@ def visualize_occupancy(frame, annotations, occupied_data):
     return vis_frame
 
 def main():
-    baseline_path = "frame_00050.jpg"
-    video_path = "birdseyevid.MOV"
+    baseline_path = "data/images/base/frame_1334.jpg"
+    video_path = "data/videos/video_1.MOV"
     # Use the new annotations file with only desk ROIs.
     annotations_path = os.path.join("annotations", "annotations_only_desk.json")
     
