@@ -34,7 +34,7 @@ def main():
     # Define colors for different ROI types (BGR format)
     colors = {
         'chair': (0, 255, 0),  # Green for chairs
-        'desk': (0, 0, 255)    # Red for desks
+        'desk': (0, 255, 0)    # Red for desks
     }
     
     # Font settings for labels

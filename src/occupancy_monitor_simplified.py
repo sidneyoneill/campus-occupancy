@@ -16,15 +16,15 @@ from ultralytics import YOLO
 # Configuration
 class Config:
     video_path = 'data/videos/video_1.MOV'
-    output_dir = 'output_2'
+    output_dir = 'output/test_20'
     resize_factor = 0.5
-    keyframe_interval = 30
+    keyframe_interval = 1
     chair_model = 'yolov8m_chair_cpu'
     person_model = 'yolov8m'
     confidence = 0.4
     iou_threshold = 0.15
     max_chair_age = 120
-    temporal_window = 5
+    temporal_window = 1
     display = True  # Added display flag
     colors = {
         'empty': (0, 255, 0),

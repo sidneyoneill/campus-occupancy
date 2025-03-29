@@ -65,7 +65,7 @@ CONFIG = {
     
     # Background subtraction thresholds
     'chair_bg_threshold': 20,  # Threshold for chair background subtraction
-    'desk_bg_threshold': 15,  # Threshold for desk background subtraction
+    'desk_bg_threshold': 5,  # Threshold for desk background subtraction
     
     # ROI visualization colors (B,G,R format)
     'colors': {

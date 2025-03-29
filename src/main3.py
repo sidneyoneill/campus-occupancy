@@ -12,7 +12,7 @@ from collections import defaultdict
 CONFIG = {
     # Input/Output Paths
     "video_path": "data/videos/video_1.MOV",
-    "output_path": "output/processed_video_7.MOV",
+    "output_path": "output/processed_video_9.MOV",
     "roi_path": "annotations/chair_locations_2.json",
     
     # Processing Parameters
@@ -197,6 +197,9 @@ def process_video():
     frame_count = 0
 
     while True:
+        # Start timing for this frame
+        frame_start_time = time.time()
+        
         ret, frame = cap.read()
         if not ret:
             break
@@ -286,6 +289,12 @@ def process_video():
             cv2.rectangle(vis_frame, pt1, pt2, (0, 255, 255), 2)
             cv2.putText(vis_frame, f"Person {person['confidence']:.2f}", (pt1[0], pt1[1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+
+        # Calculate and show processing time
+        frame_process_time = (time.time() - frame_start_time) * 1000  # convert to ms
+        cv2.putText(vis_frame, f"Process time: {frame_process_time:.1f} ms", 
+                   (10, frame_height - 40), cv2.FONT_HERSHEY_SIMPLEX, 
+                   0.5, (255, 255, 255), 2)
 
         # Show frame count (optional)
         cv2.putText(vis_frame, f"Frame: {frame_count}", (10, frame_height - 10),
