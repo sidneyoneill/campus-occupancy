@@ -351,29 +351,31 @@ def identify_missed_occupancy_events(gt_intervals, pred_intervals, overlap_thres
         if gt_duration < min_duration_frames:
             continue
             
-        max_overlap = 0
-        best_pred = None
+        # Calculate total overlapped frames with any occupied prediction
+        total_overlap_frames = 0
         
         for pred in pred_occupied:
             pred_start = pred["start_frame"]
             pred_end = pred["end_frame"]
             
-            # Calculate overlap
-            overlap_start = max(gt_start, pred_start)
-            overlap_end = min(gt_end, pred_end)
-            overlap_duration = max(0, overlap_end - overlap_start + 1)
-            
-            overlap_ratio = overlap_duration / gt_duration
-            
-            if overlap_ratio > max_overlap:
-                max_overlap = overlap_ratio
-                best_pred = pred
+            # Check if this prediction overlaps with the ground truth
+            if pred_end >= gt_start and pred_start <= gt_end:
+                # Calculate overlap
+                overlap_start = max(gt_start, pred_start)
+                overlap_end = min(gt_end, pred_end)
+                overlap_duration = max(0, overlap_end - overlap_start + 1)
+                
+                # Add to total overlapped frames
+                total_overlap_frames += overlap_duration
+        
+        # Calculate the overlap ratio based on total overlapping frames
+        overlap_ratio = total_overlap_frames / gt_duration
         
         # If the overlap is below threshold, consider the event as missed
-        if max_overlap < overlap_threshold:
+        if overlap_ratio < overlap_threshold:
             missed_events.append({
                 "event": gt,
-                "overlap_ratio": max_overlap,
+                "overlap_ratio": overlap_ratio,
                 "duration": gt_duration,
                 "duration_seconds": gt_duration / 30.0  # Assuming 30fps
             })
@@ -409,29 +411,31 @@ def identify_false_occupancy_events(gt_intervals, pred_intervals, overlap_thresh
         if pred_duration < min_duration_frames:
             continue
             
-        max_overlap = 0
-        best_gt = None
+        # Calculate total overlapped frames with any occupied ground truth
+        total_overlap_frames = 0
         
         for gt in gt_occupied:
             gt_start = gt["start_frame"]
             gt_end = gt["end_frame"]
             
-            # Calculate overlap
-            overlap_start = max(gt_start, pred_start)
-            overlap_end = min(gt_end, pred_end)
-            overlap_duration = max(0, overlap_end - overlap_start + 1)
-            
-            overlap_ratio = overlap_duration / pred_duration
-            
-            if overlap_ratio > max_overlap:
-                max_overlap = overlap_ratio
-                best_gt = gt
+            # Check if this ground truth overlaps with the prediction
+            if gt_end >= pred_start and gt_start <= pred_end:
+                # Calculate overlap
+                overlap_start = max(pred_start, gt_start)
+                overlap_end = min(pred_end, gt_end)
+                overlap_duration = max(0, overlap_end - overlap_start + 1)
+                
+                # Add to total overlapped frames
+                total_overlap_frames += overlap_duration
+        
+        # Calculate the overlap ratio based on total overlapping frames
+        overlap_ratio = total_overlap_frames / pred_duration
         
         # If the overlap is below threshold, consider the event as false
-        if max_overlap < overlap_threshold:
+        if overlap_ratio < overlap_threshold:
             false_events.append({
                 "event": pred,
-                "overlap_ratio": max_overlap,
+                "overlap_ratio": overlap_ratio,
                 "duration": pred_duration,
                 "duration_seconds": pred_duration / 30.0  # Assuming 30fps
             })
@@ -503,9 +507,9 @@ def main():
     detection_results_path = "output/detection_results_6.json"
     
     # Define significance thresholds (configurable)
-    min_event_duration_frames = 200  # 1 second at 30fps - events shorter than this are ignored
+    min_event_duration_frames = 500  # 1 second at 30fps - events shorter than this are ignored
     min_event_duration_seconds = min_event_duration_frames / 30.0
-    overlap_threshold = 0.1  # 10% overlap threshold for missed/false events
+    overlap_threshold = 0.3  # 10% overlap threshold for missed/false events
     
     # Parse command line arguments if needed
     parser = argparse.ArgumentParser(description='Evaluate occupancy detection performance')
@@ -515,6 +519,8 @@ def main():
                         help='Minimum duration (in seconds) for an event to be considered significant')
     parser.add_argument('--overlap-threshold', type=float, default=overlap_threshold,
                         help='Overlap threshold for missed/false events (0.0-1.0)')
+    parser.add_argument('--output', type=str, default="evaluation_results.txt",
+                        help='Path to output text file for evaluation results')
     args = parser.parse_args()
     
     # Update parameters from command line arguments if provided
@@ -523,283 +529,573 @@ def main():
     min_event_duration_seconds = args.min_duration
     min_event_duration_frames = int(min_event_duration_seconds * 30.0)  # Convert to frames
     overlap_threshold = args.overlap_threshold
+    output_file_path = args.output
     
-    try:
-        ground_truth = load_json_data(ground_truth_path)
-        detection_results = load_json_data(detection_results_path)
-    except json.JSONDecodeError as e:
-        print(f"Error loading JSON data: {e}")
-        # The detection_results file appears to be incomplete based on the provided content
-        # Let's implement a fallback to handle this
-        print("Detection results file may be incomplete. Using available data.")
-        with open(detection_results_path, 'r') as f:
-            content = f.read()
-        # Complete the JSON if it's truncated
-        if not content.strip().endswith('}'):
-            content += '}}}}}'  # Add missing closing brackets as needed
-            detection_results = json.loads(content)
+    # Open output file for writing results
+    with open(output_file_path, 'w') as output_file:
+        def print_both(message):
+            """Print message both to console and to output file"""
+            print(message)
+            output_file.write(message + '\n')
     
-    # Print evaluation parameters
-    print("\n===== EVALUATION PARAMETERS =====")
-    print(f"Minimum significant event duration: {min_event_duration_seconds:.1f} seconds ({min_event_duration_frames} frames)")
-    print(f"Overlap threshold for missed/false events: {overlap_threshold:.1%}\n")
-    
-    # Use the total frames from ground truth
-    total_frames = ground_truth["total_frames"]
-    
-    # Initialize results dictionary
-    all_metrics = {}
-    space_level_metrics = {}
-    completely_wrong_counts = {}
-    
-    # Analyze each space and furniture type
-    for space_id in ground_truth["annotations"]:
-        all_metrics[space_id] = {}
-        completely_wrong_counts[space_id] = {}
+        try:
+            ground_truth = load_json_data(ground_truth_path)
+            detection_results = load_json_data(detection_results_path)
+        except json.JSONDecodeError as e:
+            print_both(f"Error loading JSON data: {e}")
+            # The detection_results file appears to be incomplete based on the provided content
+            # Let's implement a fallback to handle this
+            print_both("Detection results file may be incomplete. Using available data.")
+            with open(detection_results_path, 'r') as f:
+                content = f.read()
+            # Complete the JSON if it's truncated
+            if not content.strip().endswith('}'):
+                content += '}}}}}'  # Add missing closing brackets as needed
+                detection_results = json.loads(content)
         
-        for furniture_type in ["chair", "desk"]:
-            # Create frame-by-frame occupation arrays
-            gt_occupation = create_frame_occupation_array(
-                ground_truth["annotations"], total_frames, space_id, furniture_type)
-            
-            # Check if this space/furniture exists in detection results
-            if (detection_results.get("annotations") and 
-                space_id in detection_results["annotations"] and 
-                furniture_type in detection_results["annotations"][space_id]):
-                pred_occupation = create_frame_occupation_array(
-                    detection_results["annotations"], total_frames, space_id, furniture_type)
-            else:
-                # If not present in detection results, create array of None values
-                pred_occupation = [None] * (total_frames + 1)
-            
-            # Calculate completely wrong predictions
-            wrong_count, wrong_percentage = calculate_completely_wrong_predictions(
-                gt_occupation, pred_occupation)
-            completely_wrong_counts[space_id][furniture_type] = {
-                "count": wrong_count,
-                "percentage": wrong_percentage
-            }
-            
-            # Calculate frame-by-frame metrics
-            frame_metrics = calculate_metrics(gt_occupation, pred_occupation)
-            
-            # Calculate temporal IoU
-            temporal_iou = 0
-            if (space_id in ground_truth["annotations"] and 
-                furniture_type in ground_truth["annotations"][space_id] and
-                space_id in detection_results.get("annotations", {}) and 
-                furniture_type in detection_results.get("annotations", {}).get(space_id, {})):
-                temporal_iou = calculate_temporal_iou(
-                    ground_truth["annotations"][space_id][furniture_type],
-                    detection_results["annotations"][space_id][furniture_type]
-                )
-            
-            # Calculate event detection metrics
-            event_metrics = {}
-            event_summary = {}
-            if (space_id in ground_truth["annotations"] and 
-                furniture_type in ground_truth["annotations"][space_id] and
-                space_id in detection_results.get("annotations", {}) and 
-                furniture_type in detection_results.get("annotations", {}).get(space_id, {})):
-                event_metrics = calculate_event_detection_metrics(
-                    ground_truth["annotations"][space_id][furniture_type],
-                    detection_results["annotations"][space_id][furniture_type]
-                )
-                # Add event summary with missed and false events, using configured thresholds
-                event_summary = summarize_occupancy_events(
-                    ground_truth["annotations"][space_id][furniture_type],
-                    detection_results["annotations"][space_id][furniture_type],
-                    overlap_threshold,
-                    min_event_duration_frames
-                )
-            
-            # Calculate transition detection metrics
-            transition_metrics = {}
-            if (space_id in ground_truth["annotations"] and 
-                furniture_type in ground_truth["annotations"][space_id] and
-                space_id in detection_results.get("annotations", {}) and 
-                furniture_type in detection_results.get("annotations", {}).get(space_id, {})):
-                transition_metrics = calculate_transition_detection_metrics(
-                    ground_truth["annotations"][space_id][furniture_type],
-                    detection_results["annotations"][space_id][furniture_type]
-                )
-            
-            # Store all metrics including event summary
-            all_metrics[space_id][furniture_type] = {
-                "frame_metrics": frame_metrics,
-                "temporal_iou": temporal_iou,
-                "event_metrics": event_metrics,
-                "event_summary": event_summary,
-                "transition_metrics": transition_metrics
-            }
+        # Print evaluation parameters
+        print_both("\n===== EVALUATION PARAMETERS =====")
+        print_both(f"Minimum significant event duration: {min_event_duration_seconds:.1f} seconds ({min_event_duration_frames} frames)")
+        print_both(f"Overlap threshold for missed/false events: {overlap_threshold:.1%}\n")
         
-        # Calculate space-level metrics (if either desk or chair is occupied, space is occupied)
-        space_level_metrics[space_id] = evaluate_space_level_occupancy(
-            ground_truth["annotations"], 
-            detection_results.get("annotations", {}),
-            total_frames,
-            space_id
-        )
-    
-    # Calculate overall averages
-    overall_accuracy = []
-    overall_precision = []
-    overall_recall = []
-    overall_f1 = []
-    overall_iou = []
-    overall_event_f1 = []
-    overall_transition_f1 = []
-    
-    for space_metrics in all_metrics.values():
-        for furniture_metrics in space_metrics.values():
-            if furniture_metrics["frame_metrics"]["accuracy"] is not None:
-                overall_accuracy.append(furniture_metrics["frame_metrics"]["accuracy"])
-                overall_precision.append(furniture_metrics["frame_metrics"]["precision"])
-                overall_recall.append(furniture_metrics["frame_metrics"]["recall"])
-                overall_f1.append(furniture_metrics["frame_metrics"]["f1_score"])
-            
-            if furniture_metrics["temporal_iou"] > 0:
-                overall_iou.append(furniture_metrics["temporal_iou"])
-            
-            if "f1_score" in furniture_metrics.get("event_metrics", {}):
-                overall_event_f1.append(furniture_metrics["event_metrics"]["f1_score"])
-            
-            if "f1_score" in furniture_metrics.get("transition_metrics", {}):
-                overall_transition_f1.append(furniture_metrics["transition_metrics"]["f1_score"])
-    
-    # Print results including missed and false events
-    print("\n===== DETECTION PERFORMANCE EVALUATION =====\n")
-    
-    # Print per-space, per-furniture metrics
-    for space_id, space_metrics in all_metrics.items():
-        print(f"\n== {space_id} ==")
+        # Use the total frames from ground truth
+        total_frames = ground_truth["total_frames"]
         
-        for furniture_type, furniture_metrics in space_metrics.items():
-            print(f"\n= {furniture_type} =")
+        # Initialize results dictionary
+        all_metrics = {}
+        space_level_metrics = {}
+        completely_wrong_counts = {}
+        
+        # Analyze each space and furniture type
+        for space_id in ground_truth["annotations"]:
+            all_metrics[space_id] = {}
+            completely_wrong_counts[space_id] = {}
             
-            # Frame-by-frame metrics
-            frame_metrics = furniture_metrics["frame_metrics"]
-            if frame_metrics["accuracy"] is not None:
-                print(f"Frame-by-frame Accuracy: {frame_metrics['accuracy']:.4f}")
-                print(f"Frame-by-frame Precision: {frame_metrics['precision']:.4f}")
-                print(f"Frame-by-frame Recall: {frame_metrics['recall']:.4f}")
-                print(f"Frame-by-frame F1 Score: {frame_metrics['f1_score']:.4f}")
-            else:
-                print("No valid frame-by-frame metrics available")
-            
-            # Temporal IoU
-            print(f"Temporal IoU: {furniture_metrics['temporal_iou']:.4f}")
-            
-            # Event detection metrics
-            if furniture_metrics.get("event_metrics"):
-                event_metrics = furniture_metrics["event_metrics"]
-                print("\nEvent Detection Metrics:")
-                print(f"  True Positives: {event_metrics.get('true_positives', 0)}")
-                print(f"  False Positives: {event_metrics.get('false_positives', 0)}")
-                print(f"  False Negatives: {event_metrics.get('false_negatives', 0)}")
-                print(f"  Precision: {event_metrics.get('precision', 0):.4f}")
-                print(f"  Recall: {event_metrics.get('recall', 0):.4f}")
-                print(f"  F1 Score: {event_metrics.get('f1_score', 0):.4f}")
-            
-            # Transition detection metrics
-            if furniture_metrics.get("transition_metrics"):
-                transition_metrics = furniture_metrics["transition_metrics"]
-                print("\nTransition Detection Metrics:")
-                print(f"  True Positives: {transition_metrics.get('true_positives', 0)}")
-                print(f"  False Positives: {transition_metrics.get('false_positives', 0)}")
-                print(f"  False Negatives: {transition_metrics.get('false_negatives', 0)}")
-                print(f"  Precision: {transition_metrics.get('precision', 0):.4f}")
-                print(f"  Recall: {transition_metrics.get('recall', 0):.4f}")
-                print(f"  F1 Score: {transition_metrics.get('f1_score', 0):.4f}")
-            
-            # Print event summary information with duration threshold information
-            if "event_summary" in furniture_metrics and furniture_metrics["event_summary"]:
-                summary = furniture_metrics["event_summary"]
-                print("\nOccupancy Event Summary:")
-                print(f"  GT Events (>= {min_event_duration_seconds:.1f}s): {summary.get('gt_events', 0)}")
-                print(f"  Pred Events (>= {min_event_duration_seconds:.1f}s): {summary.get('pred_events', 0)}")
-                print(f"  Avg GT Duration: {summary.get('avg_gt_duration_seconds', 0):.2f}s, " 
-                      f"Avg Pred Duration: {summary.get('avg_pred_duration_seconds', 0):.2f}s")
-                print(f"  Significant Missed Events: {summary.get('n_missed_events', 0)} "
-                      f"({summary.get('percent_missed', 0):.1%} of GT events)")
-                print(f"  Significant False Events: {summary.get('n_false_events', 0)} "
-                      f"({summary.get('percent_false', 0):.1%} of predicted events)")
+            for furniture_type in ["chair", "desk"]:
+                # Create frame-by-frame occupation arrays
+                gt_occupation = create_frame_occupation_array(
+                    ground_truth["annotations"], total_frames, space_id, furniture_type)
                 
-                # Print details of missed events
-                if summary.get('missed_events', []):
-                    print(f"\n  Details of Missed Occupancy Events (>= {min_event_duration_seconds:.1f}s):")
-                    for i, event in enumerate(summary['missed_events']):
-                        duration_sec = event['duration_seconds']
-                        print(f"    {i+1}. Frames {event['event']['start_frame']}-{event['event']['end_frame']} "
-                              f"(Duration: {duration_sec:.1f}s, Overlap: {event['overlap_ratio']:.1%})")
+                # Check if this space/furniture exists in detection results
+                if (detection_results.get("annotations") and 
+                    space_id in detection_results["annotations"] and 
+                    furniture_type in detection_results["annotations"][space_id]):
+                    pred_occupation = create_frame_occupation_array(
+                        detection_results["annotations"], total_frames, space_id, furniture_type)
+                else:
+                    # If not present in detection results, create array of None values
+                    pred_occupation = [None] * (total_frames + 1)
                 
-                # Print details of false events
-                if summary.get('false_events', []):
-                    print(f"\n  Details of False Occupancy Events (>= {min_event_duration_seconds:.1f}s):")
-                    for i, event in enumerate(summary['false_events']):
-                        duration_sec = event['duration_seconds']
-                        print(f"    {i+1}. Frames {event['event']['start_frame']}-{event['event']['end_frame']} "
-                              f"(Duration: {duration_sec:.1f}s, Overlap: {event['overlap_ratio']:.1%})")
-    
-    # Print completely wrong predictions
-    print("\n===== COMPLETELY WRONG PREDICTIONS =====")
-    for space_id, furniture_metrics in completely_wrong_counts.items():
-        print(f"\n== {space_id} ==")
-        for furniture_type, wrong_data in furniture_metrics.items():
-            print(f"  {furniture_type}: {wrong_data['count']} frames ({wrong_data['percentage']:.2%})")
-    
-    # Print space-level metrics
-    print("\n===== SPACE-LEVEL OCCUPANCY METRICS =====")
-    for space_id, metrics in space_level_metrics.items():
-        print(f"\n== {space_id} ==")
-        print(f"  Accuracy: {metrics['accuracy']:.4f}")
-        print(f"  Precision: {metrics['precision']:.4f}")
-        print(f"  Recall: {metrics['recall']:.4f}")
-        print(f"  F1 Score: {metrics['f1_score']:.4f}")
-        print(f"  Completely Wrong: {metrics['wrong_count']} frames ({metrics['wrong_percentage']:.2%})")
-    
-    # Print space-level averages
-    print("\n===== OVERALL SPACE-LEVEL PERFORMANCE =====")
-    print(f"Average Space Accuracy: {np.mean(space_level_metrics[space_id]['accuracy']):.4f} (±{np.std(space_level_metrics[space_id]['accuracy']):.4f})")
-    print(f"Average Space Precision: {np.mean(space_level_metrics[space_id]['precision']):.4f} (±{np.std(space_level_metrics[space_id]['precision']):.4f})")
-    print(f"Average Space Recall: {np.mean(space_level_metrics[space_id]['recall']):.4f} (±{np.std(space_level_metrics[space_id]['recall']):.4f})")
-    print(f"Average Space F1 Score: {np.mean(space_level_metrics[space_id]['f1_score']):.4f} (±{np.std(space_level_metrics[space_id]['f1_score']):.4f})")
-    
-    # Plot space-level confusion matrices
-    plt.figure(figsize=(10, 8))
-    for i, (space_id, metrics) in enumerate(space_level_metrics.items(), 1):
-        plt.subplot(3, 3, i)
-        sns.heatmap(metrics["confusion_matrix"], annot=True, fmt='d', cmap='Blues',
-                    xticklabels=['Unoccupied', 'Occupied'],
-                    yticklabels=['Unoccupied', 'Occupied'])
-        plt.title(f"{space_id} - Space Level")
-        plt.ylabel('Ground Truth')
-        plt.xlabel('Prediction')
-    
-    plt.tight_layout()
-    plt.savefig('space_level_confusion_matrices.png')
-    plt.close()
-    
-    print("\nSpace-level results saved to space_level_confusion_matrices.png")
+                # Calculate completely wrong predictions
+                wrong_count, wrong_percentage = calculate_completely_wrong_predictions(
+                    gt_occupation, pred_occupation)
+                completely_wrong_counts[space_id][furniture_type] = {
+                    "count": wrong_count,
+                    "percentage": wrong_percentage
+                }
+                
+                # Calculate frame-by-frame metrics
+                frame_metrics = calculate_metrics(gt_occupation, pred_occupation)
+                
+                # Calculate temporal IoU
+                temporal_iou = 0
+                if (space_id in ground_truth["annotations"] and 
+                    furniture_type in ground_truth["annotations"][space_id] and
+                    space_id in detection_results.get("annotations", {}) and 
+                    furniture_type in detection_results.get("annotations", {}).get(space_id, {})):
+                    temporal_iou = calculate_temporal_iou(
+                        ground_truth["annotations"][space_id][furniture_type],
+                        detection_results["annotations"][space_id][furniture_type]
+                    )
+                
+                # Calculate event detection metrics
+                event_metrics = {}
+                event_summary = {}
+                if (space_id in ground_truth["annotations"] and 
+                    furniture_type in ground_truth["annotations"][space_id] and
+                    space_id in detection_results.get("annotations", {}) and 
+                    furniture_type in detection_results.get("annotations", {}).get(space_id, {})):
+                    event_metrics = calculate_event_detection_metrics(
+                        ground_truth["annotations"][space_id][furniture_type],
+                        detection_results["annotations"][space_id][furniture_type]
+                    )
+                    # Add event summary with missed and false events, using configured thresholds
+                    event_summary = summarize_occupancy_events(
+                        ground_truth["annotations"][space_id][furniture_type],
+                        detection_results["annotations"][space_id][furniture_type],
+                        overlap_threshold,
+                        min_event_duration_frames
+                    )
+                
+                # Calculate transition detection metrics
+                transition_metrics = {}
+                if (space_id in ground_truth["annotations"] and 
+                    furniture_type in ground_truth["annotations"][space_id] and
+                    space_id in detection_results.get("annotations", {}) and 
+                    furniture_type in detection_results.get("annotations", {}).get(space_id, {})):
+                    transition_metrics = calculate_transition_detection_metrics(
+                        ground_truth["annotations"][space_id][furniture_type],
+                        detection_results["annotations"][space_id][furniture_type]
+                    )
+                
+                # Store all metrics including event summary
+                all_metrics[space_id][furniture_type] = {
+                    "frame_metrics": frame_metrics,
+                    "temporal_iou": temporal_iou,
+                    "event_metrics": event_metrics,
+                    "event_summary": event_summary,
+                    "transition_metrics": transition_metrics
+                }
+            
+            # Calculate space-level metrics (if either desk or chair is occupied, space is occupied)
+            space_level_metrics[space_id] = evaluate_space_level_occupancy(
+                ground_truth["annotations"], 
+                detection_results.get("annotations", {}),
+                total_frames,
+                space_id
+            )
+        
+        # Calculate overall averages
+        overall_accuracy = []
+        overall_precision = []
+        overall_recall = []
+        overall_f1 = []
+        overall_iou = []
+        overall_event_f1 = []
+        overall_transition_f1 = []
+        
+        # Add separate metrics for chairs and desks
+        chair_accuracy = []
+        chair_precision = []
+        chair_recall = []
+        chair_f1 = []
+        chair_iou = []
+        chair_event_f1 = []
+        
+        desk_accuracy = []
+        desk_precision = [] 
+        desk_recall = []
+        desk_f1 = []
+        desk_iou = []
+        desk_event_f1 = []
+        
+        for space_metrics in all_metrics.values():
+            for furniture_type, furniture_metrics in space_metrics.items():
+                if furniture_metrics["frame_metrics"]["accuracy"] is not None:
+                    overall_accuracy.append(furniture_metrics["frame_metrics"]["accuracy"])
+                    overall_precision.append(furniture_metrics["frame_metrics"]["precision"])
+                    overall_recall.append(furniture_metrics["frame_metrics"]["recall"])
+                    overall_f1.append(furniture_metrics["frame_metrics"]["f1_score"])
+                    
+                    # Add to furniture-specific metrics
+                    if furniture_type == "chair":
+                        chair_accuracy.append(furniture_metrics["frame_metrics"]["accuracy"])
+                        chair_precision.append(furniture_metrics["frame_metrics"]["precision"])
+                        chair_recall.append(furniture_metrics["frame_metrics"]["recall"])
+                        chair_f1.append(furniture_metrics["frame_metrics"]["f1_score"])
+                    elif furniture_type == "desk":
+                        desk_accuracy.append(furniture_metrics["frame_metrics"]["accuracy"])
+                        desk_precision.append(furniture_metrics["frame_metrics"]["precision"])
+                        desk_recall.append(furniture_metrics["frame_metrics"]["recall"])
+                        desk_f1.append(furniture_metrics["frame_metrics"]["f1_score"])
+                
+                if furniture_metrics["temporal_iou"] > 0:
+                    overall_iou.append(furniture_metrics["temporal_iou"])
+                    # Add to furniture-specific IoU
+                    if furniture_type == "chair":
+                        chair_iou.append(furniture_metrics["temporal_iou"])
+                    elif furniture_type == "desk":
+                        desk_iou.append(furniture_metrics["temporal_iou"])
+                
+                if "f1_score" in furniture_metrics.get("event_metrics", {}):
+                    overall_event_f1.append(furniture_metrics["event_metrics"]["f1_score"])
+                    # Add to furniture-specific event F1
+                    if furniture_type == "chair":
+                        chair_event_f1.append(furniture_metrics["event_metrics"]["f1_score"])
+                    elif furniture_type == "desk":
+                        desk_event_f1.append(furniture_metrics["event_metrics"]["f1_score"])
+                
+                if "f1_score" in furniture_metrics.get("transition_metrics", {}):
+                    overall_transition_f1.append(furniture_metrics["transition_metrics"]["f1_score"])
+        
+        # Print results including missed and false events
+        print_both("\n===== DETECTION PERFORMANCE EVALUATION =====\n")
+        
+        # Print per-space, per-furniture metrics
+        for space_id, space_metrics in all_metrics.items():
+            print_both(f"\n== {space_id} ==")
+            
+            for furniture_type, furniture_metrics in space_metrics.items():
+                print_both(f"\n= {furniture_type} =")
+                
+                # Frame-by-frame metrics
+                frame_metrics = furniture_metrics["frame_metrics"]
+                if frame_metrics["accuracy"] is not None:
+                    print_both(f"Frame-by-frame Accuracy: {frame_metrics['accuracy']:.4f}")
+                    print_both(f"Frame-by-frame Precision: {frame_metrics['precision']:.4f}")
+                    print_both(f"Frame-by-frame Recall: {frame_metrics['recall']:.4f}")
+                    print_both(f"Frame-by-frame F1 Score: {frame_metrics['f1_score']:.4f}")
+                else:
+                    print_both("No valid frame-by-frame metrics available")
+                
+                # Temporal IoU
+                print_both(f"Temporal IoU: {furniture_metrics['temporal_iou']:.4f}")
+                
+                # Event detection metrics
+                if furniture_metrics.get("event_metrics"):
+                    event_metrics = furniture_metrics["event_metrics"]
+                    print_both("\nEvent Detection Metrics:")
+                    print_both(f"  True Positives: {event_metrics.get('true_positives', 0)}")
+                    print_both(f"  False Positives: {event_metrics.get('false_positives', 0)}")
+                    print_both(f"  False Negatives: {event_metrics.get('false_negatives', 0)}")
+                    print_both(f"  Precision: {event_metrics.get('precision', 0):.4f}")
+                    print_both(f"  Recall: {event_metrics.get('recall', 0):.4f}")
+                    print_both(f"  F1 Score: {event_metrics.get('f1_score', 0):.4f}")
+                
+                # Transition detection metrics
+                if furniture_metrics.get("transition_metrics"):
+                    transition_metrics = furniture_metrics["transition_metrics"]
+                    print_both("\nTransition Detection Metrics:")
+                    print_both(f"  True Positives: {transition_metrics.get('true_positives', 0)}")
+                    print_both(f"  False Positives: {transition_metrics.get('false_positives', 0)}")
+                    print_both(f"  False Negatives: {transition_metrics.get('false_negatives', 0)}")
+                    print_both(f"  Precision: {transition_metrics.get('precision', 0):.4f}")
+                    print_both(f"  Recall: {transition_metrics.get('recall', 0):.4f}")
+                    print_both(f"  F1 Score: {transition_metrics.get('f1_score', 0):.4f}")
+                
+                # Print event summary information with duration threshold information
+                if "event_summary" in furniture_metrics and furniture_metrics["event_summary"]:
+                    summary = furniture_metrics["event_summary"]
+                    print_both("\nOccupancy Event Summary:")
+                    print_both(f"  GT Events (>= {min_event_duration_seconds:.1f}s): {summary.get('gt_events', 0)}")
+                    print_both(f"  Pred Events (>= {min_event_duration_seconds:.1f}s): {summary.get('pred_events', 0)}")
+                    print_both(f"  Avg GT Duration: {summary.get('avg_gt_duration_seconds', 0):.2f}s, " 
+                          f"Avg Pred Duration: {summary.get('avg_pred_duration_seconds', 0):.2f}s")
+                    print_both(f"  Significant Missed Events: {summary.get('n_missed_events', 0)} "
+                          f"({summary.get('percent_missed', 0):.1%} of GT events)")
+                    print_both(f"  Significant False Events: {summary.get('n_false_events', 0)} "
+                          f"({summary.get('percent_false', 0):.1%} of predicted events)")
+                    
+                    # Print details of missed events
+                    if summary.get('missed_events', []):
+                        print_both(f"\n  Details of Missed Occupancy Events (>= {min_event_duration_seconds:.1f}s):")
+                        for i, event in enumerate(summary['missed_events']):
+                            duration_sec = event['duration_seconds']
+                            print_both(f"    {i+1}. Frames {event['event']['start_frame']}-{event['event']['end_frame']} "
+                                  f"(Duration: {duration_sec:.1f}s, Overlap: {event['overlap_ratio']:.1%})")
+                    
+                    # Print details of false events
+                    if summary.get('false_events', []):
+                        print_both(f"\n  Details of False Occupancy Events (>= {min_event_duration_seconds:.1f}s):")
+                        for i, event in enumerate(summary['false_events']):
+                            duration_sec = event['duration_seconds']
+                            print_both(f"    {i+1}. Frames {event['event']['start_frame']}-{event['event']['end_frame']} "
+                                  f"(Duration: {duration_sec:.1f}s, Overlap: {event['overlap_ratio']:.1%})")
+        
+        # Print completely wrong predictions
+        print_both("\n===== COMPLETELY WRONG PREDICTIONS =====")
+        for space_id, furniture_metrics in completely_wrong_counts.items():
+            print_both(f"\n== {space_id} ==")
+            for furniture_type, wrong_data in furniture_metrics.items():
+                print_both(f"  {furniture_type}: {wrong_data['count']} frames ({wrong_data['percentage']:.2%})")
+        
+        # Print space-level metrics
+        print_both("\n===== SPACE-LEVEL OCCUPANCY METRICS =====")
+        for space_id, metrics in space_level_metrics.items():
+            print_both(f"\n== {space_id} ==")
+            print_both(f"  Accuracy: {metrics['accuracy']:.4f}")
+            print_both(f"  Precision: {metrics['precision']:.4f}")
+            print_both(f"  Recall: {metrics['recall']:.4f}")
+            print_both(f"  F1 Score: {metrics['f1_score']:.4f}")
+            print_both(f"  Completely Wrong: {metrics['wrong_count']} frames ({metrics['wrong_percentage']:.2%})")
+        
+        # Print space-level averages
+        print_both("\n===== OVERALL SPACE-LEVEL PERFORMANCE =====")
+        avg_accuracy = np.mean([metrics['accuracy'] for metrics in space_level_metrics.values()])
+        std_accuracy = np.std([metrics['accuracy'] for metrics in space_level_metrics.values()])
+        avg_precision = np.mean([metrics['precision'] for metrics in space_level_metrics.values()])
+        std_precision = np.std([metrics['precision'] for metrics in space_level_metrics.values()])
+        avg_recall = np.mean([metrics['recall'] for metrics in space_level_metrics.values()])
+        std_recall = np.std([metrics['recall'] for metrics in space_level_metrics.values()])
+        avg_f1 = np.mean([metrics['f1_score'] for metrics in space_level_metrics.values()])
+        std_f1 = np.std([metrics['f1_score'] for metrics in space_level_metrics.values()])
+        
+        print_both(f"Average Space Accuracy: {avg_accuracy:.4f} (±{std_accuracy:.4f})")
+        print_both(f"Average Space Precision: {avg_precision:.4f} (±{std_precision:.4f})")
+        print_both(f"Average Space Recall: {avg_recall:.4f} (±{std_recall:.4f})")
+        print_both(f"Average Space F1 Score: {avg_f1:.4f} (±{std_f1:.4f})")
+        
+        # Plot space-level confusion matrices
+        plt.figure(figsize=(10, 8))
+        for i, (space_id, metrics) in enumerate(space_level_metrics.items(), 1):
+            plt.subplot(3, 3, i)
+            sns.heatmap(metrics["confusion_matrix"], annot=True, fmt='d', cmap='Blues',
+                        xticklabels=['Unoccupied', 'Occupied'],
+                        yticklabels=['Unoccupied', 'Occupied'])
+            plt.title(f"{space_id} - Space Level")
+            plt.ylabel('Ground Truth')
+            plt.xlabel('Prediction')
+        
+        plt.tight_layout()
+        plt.savefig('space_level_confusion_matrices.png')
+        plt.close()
+        
+        print_both("\nSpace-level results saved to space_level_confusion_matrices.png")
 
-    # Summarize missed event statistics across all spaces and furniture, emphasizing significance threshold
-    total_gt_events = 0
-    total_missed_events = 0
-    total_false_events = 0
-    
-    for space_metrics in all_metrics.values():
-        for furniture_metrics in space_metrics.values():
-            if "event_summary" in furniture_metrics and furniture_metrics["event_summary"]:
-                summary = furniture_metrics["event_summary"]
-                total_gt_events += summary.get('gt_events', 0)
-                total_missed_events += summary.get('n_missed_events', 0)
-                total_false_events += summary.get('n_false_events', 0)
-    
-    print("\n===== OVERALL EVENT DETECTION PERFORMANCE =====")
-    print(f"Events considered significant: >= {min_event_duration_seconds:.1f} seconds")
-    print(f"Total significant GT occupancy events: {total_gt_events}")
-    print(f"Total significant missed events: {total_missed_events} ({total_missed_events/total_gt_events:.1%} if total_gt_events > 0)")
-    print(f"Total significant false events: {total_false_events}")
+        # Summarize missed event statistics across all spaces and furniture, emphasizing significance threshold
+        total_gt_events = 0
+        total_missed_events = 0
+        total_false_events = 0
+        
+        for space_metrics in all_metrics.values():
+            for furniture_metrics in space_metrics.values():
+                if "event_summary" in furniture_metrics and furniture_metrics["event_summary"]:
+                    summary = furniture_metrics["event_summary"]
+                    total_gt_events += summary.get('gt_events', 0)
+                    total_missed_events += summary.get('n_missed_events', 0)
+                    total_false_events += summary.get('n_false_events', 0)
+        
+        print_both("\n===== OVERALL EVENT DETECTION PERFORMANCE =====")
+        print_both(f"Events considered significant: >= {min_event_duration_seconds:.1f} seconds")
+        print_both(f"Total significant GT occupancy events: {total_gt_events}")
+        missed_percentage = total_missed_events/total_gt_events if total_gt_events > 0 else 0
+        print_both(f"Total significant missed events: {total_missed_events} ({missed_percentage:.1%})")
+        print_both(f"Total significant false events: {total_false_events}")
+        
+        # Add separate reporting for chair and desk metrics
+        print_both("\n===== FURNITURE-SPECIFIC PERFORMANCE =====")
+        
+        # Chair performance
+        print_both("\n== CHAIR DETECTION PERFORMANCE ==")
+        if chair_accuracy:
+            print_both(f"Average Chair Accuracy: {np.mean(chair_accuracy):.4f} (±{np.std(chair_accuracy):.4f})")
+            print_both(f"Average Chair Precision: {np.mean(chair_precision):.4f} (±{np.std(chair_precision):.4f})")
+            print_both(f"Average Chair Recall: {np.mean(chair_recall):.4f} (±{np.std(chair_recall):.4f})")
+            print_both(f"Average Chair F1 Score: {np.mean(chair_f1):.4f} (±{np.std(chair_f1):.4f})")
+            if chair_iou:
+                print_both(f"Average Chair Temporal IoU: {np.mean(chair_iou):.4f} (±{np.std(chair_iou):.4f})")
+            if chair_event_f1:
+                print_both(f"Average Chair Event F1 Score: {np.mean(chair_event_f1):.4f} (±{np.std(chair_event_f1):.4f})")
+        else:
+            print_both("No valid chair metrics available")
+        
+        # Desk performance
+        print_both("\n== DESK DETECTION PERFORMANCE ==")
+        if desk_accuracy:
+            print_both(f"Average Desk Accuracy: {np.mean(desk_accuracy):.4f} (±{np.std(desk_accuracy):.4f})")
+            print_both(f"Average Desk Precision: {np.mean(desk_precision):.4f} (±{np.std(desk_precision):.4f})")
+            print_both(f"Average Desk Recall: {np.mean(desk_recall):.4f} (±{np.std(desk_recall):.4f})")
+            print_both(f"Average Desk F1 Score: {np.mean(desk_f1):.4f} (±{np.std(desk_f1):.4f})")
+            if desk_iou:
+                print_both(f"Average Desk Temporal IoU: {np.mean(desk_iou):.4f} (±{np.std(desk_iou):.4f})")
+            if desk_event_f1:
+                print_both(f"Average Desk Event F1 Score: {np.mean(desk_event_f1):.4f} (±{np.std(desk_event_f1):.4f})")
+        else:
+            print_both("No valid desk metrics available")
+        
+        # Add a comprehensive summary of all significant missed and false events across all spaces
+        print_both("\n===== SIGNIFICANT MISSED AND FALSE EVENTS SUMMARY =====")
+        print_both(f"Events considered significant: >= {min_event_duration_seconds:.1f} seconds")
+        
+        # Collect all significant missed and false events
+        all_missed_events = []
+        for space_id, space_metrics in all_metrics.items():
+            for furniture_type, furniture_metrics in space_metrics.items():
+                if "event_summary" in furniture_metrics and furniture_metrics["event_summary"]:
+                    summary = furniture_metrics["event_summary"]
+                    for event in summary.get('missed_events', []):
+                        # Add space and furniture type to the event data
+                        event_info = {
+                            'space_id': space_id,
+                            'furniture_type': furniture_type,
+                            'start_frame': event['event']['start_frame'],
+                            'end_frame': event['event']['end_frame'],
+                            'duration_seconds': event['duration_seconds'],
+                            'overlap_ratio': event['overlap_ratio'],
+                            'gt_occupied': event['event']['occupied']  # Ground truth occupancy status
+                        }
+                        all_missed_events.append(event_info)
+        
+        # Collect all significant false events
+        all_false_events = []
+        for space_id, space_metrics in all_metrics.items():
+            for furniture_type, furniture_metrics in space_metrics.items():
+                if "event_summary" in furniture_metrics and furniture_metrics["event_summary"]:
+                    summary = furniture_metrics["event_summary"]
+                    for event in summary.get('false_events', []):
+                        # Add space and furniture type to the event data
+                        event_info = {
+                            'space_id': space_id,
+                            'furniture_type': furniture_type,
+                            'start_frame': event['event']['start_frame'],
+                            'end_frame': event['event']['end_frame'],
+                            'duration_seconds': event['duration_seconds'],
+                            'overlap_ratio': event['overlap_ratio'],
+                            'pred_occupied': event['event']['occupied']  # Prediction occupancy status
+                        }
+                        all_false_events.append(event_info)
+        
+        # Sort events by start frame to show chronological order
+        all_missed_events.sort(key=lambda x: x['start_frame'])
+        all_false_events.sort(key=lambda x: x['start_frame'])
+        
+        # Print all significant missed events
+        if all_missed_events:
+            print_both("\n== ALL SIGNIFICANT MISSED EVENTS (chronological order) ==")
+            for i, event in enumerate(all_missed_events):
+                # Calculate timestamp (assuming 30fps)
+                start_time = event['start_frame'] / 30.0
+                end_time = event['end_frame'] / 30.0
+                minutes_start = int(start_time // 60)
+                seconds_start = start_time % 60
+                minutes_end = int(end_time // 60)
+                seconds_end = end_time % 60
+                
+                # Get detailed ground truth status
+                gt_status = "OCCUPIED" if event['gt_occupied'] else "UNOCCUPIED"
+                
+                # Find corresponding predictions for this time range
+                pred_ranges = []
+                space_id = event['space_id']
+                furniture_type = event['furniture_type']
+                
+                if (space_id in detection_results.get("annotations", {}) and 
+                    furniture_type in detection_results["annotations"].get(space_id, {})):
+                    
+                    # Collect all prediction intervals that overlap with this event
+                    overlapping_preds = []
+                    for pred in detection_results["annotations"][space_id][furniture_type]:
+                        pred_start = pred["start_frame"]
+                        pred_end = pred["end_frame"]
+                        pred_status = "OCCUPIED" if pred["occupied"] else "UNOCCUPIED"
+                        
+                        # Check if this prediction overlaps with the event
+                        if (pred_end >= event['start_frame'] and pred_start <= event['end_frame']):
+                            # Calculate the actual overlap range
+                            overlap_start = max(pred_start, event['start_frame'])
+                            overlap_end = min(pred_end, event['end_frame'])
+                            
+                            # Calculate timestamps for this overlap
+                            o_start_time = overlap_start / 30.0
+                            o_end_time = overlap_end / 30.0
+                            o_min_start = int(o_start_time // 60)
+                            o_sec_start = o_start_time % 60
+                            o_min_end = int(o_end_time // 60)
+                            o_sec_end = o_end_time % 60
+                            
+                            overlapping_preds.append({
+                                "status": pred_status,
+                                "start_frame": overlap_start,
+                                "end_frame": overlap_end,
+                                "time_str": f"{o_min_start:02d}:{o_sec_start:05.2f}-{o_min_end:02d}:{o_sec_end:05.2f}"
+                            })
+                    
+                    # If we have overlapping predictions, add them to the output
+                    if overlapping_preds:
+                        for p in overlapping_preds:
+                            pred_ranges.append(f"{p['status']} from {p['time_str']}")
+                    else:
+                        # If no overlapping predictions, note this entire period had no prediction
+                        pred_ranges.append(f"NO PREDICTION for entire period")
+                else:
+                    # If no predictions at all for this space/furniture, note that
+                    pred_ranges.append(f"NO PREDICTIONS AVAILABLE for this {furniture_type}")
+                
+                print_both(f"{i+1}. {event['space_id']} - {event['furniture_type']}:")
+                print_both(f"   Frames {event['start_frame']}-{event['end_frame']} (Duration: {event['duration_seconds']:.1f}s)")
+                print_both(f"   Timestamp: {minutes_start:02d}:{seconds_start:05.2f} to {minutes_end:02d}:{seconds_end:05.2f}")
+                print_both(f"   Ground Truth: {gt_status} for entire period")
+                
+                if pred_ranges:
+                    print_both(f"   Predictions during this period:")
+                    for j, pred_range in enumerate(pred_ranges):
+                        print_both(f"     - {pred_range}")
+                else:
+                    print_both(f"   No predictions available for this period")
+                
+                print_both(f"   Overall overlap with predictions: {event['overlap_ratio']:.1%}")
+        else:
+            print_both("\nNo significant missed events")
+        
+        # Print all significant false events
+        if all_false_events:
+            print_both("\n== ALL SIGNIFICANT FALSE EVENTS (chronological order) ==")
+            for i, event in enumerate(all_false_events):
+                # Calculate timestamp (assuming 30fps)
+                start_time = event['start_frame'] / 30.0
+                end_time = event['end_frame'] / 30.0
+                minutes_start = int(start_time // 60)
+                seconds_start = start_time % 60
+                minutes_end = int(end_time // 60)
+                seconds_end = end_time % 60
+                
+                # Get detailed prediction status
+                pred_status = "OCCUPIED" if event['pred_occupied'] else "UNOCCUPIED"
+                
+                # Find corresponding ground truth for this time range
+                gt_ranges = []
+                space_id = event['space_id']
+                furniture_type = event['furniture_type']
+                
+                if (space_id in ground_truth["annotations"] and 
+                    furniture_type in ground_truth["annotations"].get(space_id, {})):
+                    
+                    # Collect all ground truth intervals that overlap with this event
+                    overlapping_gts = []
+                    for gt in ground_truth["annotations"][space_id][furniture_type]:
+                        gt_start = gt["start_frame"]
+                        gt_end = gt["end_frame"]
+                        gt_status = "OCCUPIED" if gt["occupied"] else "UNOCCUPIED"
+                        
+                        # Check if this ground truth overlaps with the event
+                        if (gt_end >= event['start_frame'] and gt_start <= event['end_frame']):
+                            # Calculate the actual overlap range
+                            overlap_start = max(gt_start, event['start_frame'])
+                            overlap_end = min(gt_end, event['end_frame'])
+                            
+                            # Calculate timestamps for this overlap
+                            o_start_time = overlap_start / 30.0
+                            o_end_time = overlap_end / 30.0
+                            o_min_start = int(o_start_time // 60)
+                            o_sec_start = o_start_time % 60
+                            o_min_end = int(o_end_time // 60)
+                            o_sec_end = o_end_time % 60
+                            
+                            overlapping_gts.append({
+                                "status": gt_status,
+                                "start_frame": overlap_start,
+                                "end_frame": overlap_end,
+                                "time_str": f"{o_min_start:02d}:{o_sec_start:05.2f}-{o_min_end:02d}:{o_sec_end:05.2f}"
+                            })
+                    
+                    # If we have overlapping ground truths, add them to the output
+                    if overlapping_gts:
+                        for g in overlapping_gts:
+                            gt_ranges.append(f"{g['status']} from {g['time_str']}")
+                    else:
+                        # If no overlapping ground truths, note this entire period had no ground truth
+                        gt_ranges.append(f"NO GROUND TRUTH for entire period")
+                else:
+                    # If no ground truth at all for this space/furniture, note that
+                    gt_ranges.append(f"NO GROUND TRUTH AVAILABLE for this {furniture_type}")
+                
+                print_both(f"{i+1}. {event['space_id']} - {event['furniture_type']}:")
+                print_both(f"   Frames {event['start_frame']}-{event['end_frame']} (Duration: {event['duration_seconds']:.1f}s)")
+                print_both(f"   Timestamp: {minutes_start:02d}:{seconds_start:05.2f} to {minutes_end:02d}:{seconds_end:05.2f}")
+                print_both(f"   Prediction: {pred_status} for entire period")
+                
+                if gt_ranges:
+                    print_both(f"   Ground truth during this period:")
+                    for j, gt_range in enumerate(gt_ranges):
+                        print_both(f"     - {gt_range}")
+                else:
+                    print_both(f"   No ground truth available for this period")
+                
+                print_both(f"   Overall overlap with ground truth: {event['overlap_ratio']:.1%}")
+        else:
+            print_both("\nNo significant false events")
+        
+        print(f"Evaluation results saved to {output_file_path}")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,622 @@
+
+===== EVALUATION PARAMETERS =====
+Minimum significant event duration: 6.7 seconds (200 frames)
+Overlap threshold for missed/false events: 10.0%
+
+
+===== DETECTION PERFORMANCE EVALUATION =====
+
+
+== space1 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.6343
+Frame-by-frame Precision: 0.3789
+Frame-by-frame Recall: 0.1559
+Frame-by-frame F1 Score: 0.2209
+Temporal IoU: 0.1208
+
+Event Detection Metrics:
+  True Positives: 0
+  False Positives: 4
+  False Negatives: 2
+  Precision: 0.0000
+  Recall: 0.0000
+  F1 Score: 0.0000
+
+Transition Detection Metrics:
+  True Positives: 1
+  False Positives: 18
+  False Negatives: 2
+  Precision: 0.0526
+  Recall: 0.3333
+  F1 Score: 0.0909
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 2
+  Pred Events (>= 6.7s): 0
+  Avg GT Duration: 19.03s, Avg Pred Duration: 0.00s
+  Significant Missed Events: 1 (50.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+  Details of Missed Occupancy Events (>= 6.7s):
+    1. Frames 4580-5251 (Duration: 22.4s, Overlap: 0.0%)
+
+= desk =
+Frame-by-frame Accuracy: 0.9670
+Frame-by-frame Precision: 0.9478
+Frame-by-frame Recall: 0.9996
+Frame-by-frame F1 Score: 0.9730
+Temporal IoU: 0.9268
+
+Event Detection Metrics:
+  True Positives: 3
+  False Positives: 6
+  False Negatives: 0
+  Precision: 0.3333
+  Recall: 1.0000
+  F1 Score: 0.5000
+
+Transition Detection Metrics:
+  True Positives: 5
+  False Positives: 34
+  False Negatives: 0
+  Precision: 0.1282
+  Recall: 1.0000
+  F1 Score: 0.2273
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 3
+  Pred Events (>= 6.7s): 3
+  Avg GT Duration: 27.21s, Avg Pred Duration: 27.12s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+== space2 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.8036
+Frame-by-frame Precision: 0.5903
+Frame-by-frame Recall: 0.8758
+Frame-by-frame F1 Score: 0.7053
+Temporal IoU: 0.5349
+
+Event Detection Metrics:
+  True Positives: 1
+  False Positives: 5
+  False Negatives: 0
+  Precision: 0.1667
+  Recall: 1.0000
+  F1 Score: 0.2857
+
+Transition Detection Metrics:
+  True Positives: 1
+  False Positives: 26
+  False Negatives: 1
+  Precision: 0.0370
+  Recall: 0.5000
+  F1 Score: 0.0690
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 1
+  Pred Events (>= 6.7s): 2
+  Avg GT Duration: 42.00s, Avg Pred Duration: 21.20s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 1 (50.0% of predicted events)
+
+  Details of False Occupancy Events (>= 6.7s):
+    1. Frames 4810-5190 (Duration: 12.7s, Overlap: 0.0%)
+
+= desk =
+Frame-by-frame Accuracy: 0.9908
+Frame-by-frame Precision: 0.9868
+Frame-by-frame Recall: 1.0000
+Frame-by-frame F1 Score: 0.9933
+Temporal IoU: 0.9780
+
+Event Detection Metrics:
+  True Positives: 3
+  False Positives: 0
+  False Negatives: 0
+  Precision: 1.0000
+  Recall: 1.0000
+  F1 Score: 1.0000
+
+Transition Detection Metrics:
+  True Positives: 6
+  False Positives: 9
+  False Negatives: 0
+  Precision: 0.4000
+  Recall: 1.0000
+  F1 Score: 0.5714
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 3
+  Pred Events (>= 6.7s): 3
+  Avg GT Duration: 34.22s, Avg Pred Duration: 34.59s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+== space3 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.8148
+Frame-by-frame Precision: 0.8007
+Frame-by-frame Recall: 0.6756
+Frame-by-frame F1 Score: 0.7328
+Temporal IoU: 0.5572
+
+Event Detection Metrics:
+  True Positives: 2
+  False Positives: 3
+  False Negatives: 1
+  Precision: 0.4000
+  Recall: 0.6667
+  F1 Score: 0.5000
+
+Transition Detection Metrics:
+  True Positives: 3
+  False Positives: 16
+  False Negatives: 2
+  Precision: 0.1579
+  Recall: 0.6000
+  F1 Score: 0.2500
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 2
+  Pred Events (>= 6.7s): 1
+  Avg GT Duration: 16.33s, Avg Pred Duration: 16.37s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+= desk =
+Frame-by-frame Accuracy: 0.9377
+Frame-by-frame Precision: 0.8114
+Frame-by-frame Recall: 1.0000
+Frame-by-frame F1 Score: 0.8959
+Temporal IoU: 0.8114
+
+Event Detection Metrics:
+  True Positives: 1
+  False Positives: 1
+  False Negatives: 0
+  Precision: 0.5000
+  Recall: 1.0000
+  F1 Score: 0.6667
+
+Transition Detection Metrics:
+  True Positives: 1
+  False Positives: 10
+  False Negatives: 2
+  Precision: 0.0909
+  Recall: 0.3333
+  F1 Score: 0.1429
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 1
+  Pred Events (>= 6.7s): 1
+  Avg GT Duration: 31.70s, Avg Pred Duration: 38.03s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+== space4 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.9327
+Frame-by-frame Precision: 0.8508
+Frame-by-frame Recall: 0.9334
+Frame-by-frame F1 Score: 0.8902
+Temporal IoU: 0.7899
+
+Event Detection Metrics:
+  True Positives: 1
+  False Positives: 2
+  False Negatives: 1
+  Precision: 0.3333
+  Recall: 0.5000
+  F1 Score: 0.4000
+
+Transition Detection Metrics:
+  True Positives: 2
+  False Positives: 11
+  False Negatives: 2
+  Precision: 0.1538
+  Recall: 0.5000
+  F1 Score: 0.2353
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 1
+  Pred Events (>= 6.7s): 1
+  Avg GT Duration: 35.33s, Avg Pred Duration: 33.03s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+= desk =
+Frame-by-frame Accuracy: 0.9997
+Frame-by-frame Precision: 1.0000
+Frame-by-frame Recall: 0.9996
+Frame-by-frame F1 Score: 0.9998
+Temporal IoU: 0.9938
+
+Event Detection Metrics:
+  True Positives: 1
+  False Positives: 0
+  False Negatives: 1
+  Precision: 1.0000
+  Recall: 0.5000
+  F1 Score: 0.6667
+
+Transition Detection Metrics:
+  True Positives: 2
+  False Positives: 3
+  False Negatives: 2
+  Precision: 0.4000
+  Recall: 0.5000
+  F1 Score: 0.4444
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 1
+  Pred Events (>= 6.7s): 1
+  Avg GT Duration: 85.13s, Avg Pred Duration: 85.03s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+== space5 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.6624
+Frame-by-frame Precision: 1.0000
+Frame-by-frame Recall: 0.1582
+Frame-by-frame F1 Score: 0.2732
+Temporal IoU: 0.1304
+
+Event Detection Metrics:
+  True Positives: 0
+  False Positives: 4
+  False Negatives: 1
+  Precision: 0.0000
+  Recall: 0.0000
+  F1 Score: 0.0000
+
+Transition Detection Metrics:
+  True Positives: 0
+  False Positives: 17
+  False Negatives: 2
+  Precision: 0.0000
+  Recall: 0.0000
+  F1 Score: 0.0000
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 1
+  Pred Events (>= 6.7s): 0
+  Avg GT Duration: 35.33s, Avg Pred Duration: 0.00s
+  Significant Missed Events: 1 (100.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+  Details of Missed Occupancy Events (>= 6.7s):
+    1. Frames 2660-3719 (Duration: 35.3s, Overlap: 7.6%)
+
+= desk =
+Frame-by-frame Accuracy: 0.9564
+Frame-by-frame Precision: 0.9597
+Frame-by-frame Recall: 0.9900
+Frame-by-frame F1 Score: 0.9746
+Temporal IoU: 0.8699
+
+Event Detection Metrics:
+  True Positives: 3
+  False Positives: 3
+  False Negatives: 1
+  Precision: 0.5000
+  Recall: 0.7500
+  F1 Score: 0.6000
+
+Transition Detection Metrics:
+  True Positives: 6
+  False Positives: 21
+  False Negatives: 1
+  Precision: 0.2222
+  Recall: 0.8571
+  F1 Score: 0.3529
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 3
+  Pred Events (>= 6.7s): 3
+  Avg GT Duration: 22.44s, Avg Pred Duration: 22.57s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+== space6 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.4145
+Frame-by-frame Precision: 0.9980
+Frame-by-frame Recall: 0.1954
+Frame-by-frame F1 Score: 0.3268
+Temporal IoU: 0.1910
+
+Event Detection Metrics:
+  True Positives: 1
+  False Positives: 3
+  False Negatives: 1
+  Precision: 0.2500
+  Recall: 0.5000
+  F1 Score: 0.3333
+
+Transition Detection Metrics:
+  True Positives: 2
+  False Positives: 11
+  False Negatives: 1
+  Precision: 0.1538
+  Recall: 0.6667
+  F1 Score: 0.2500
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 2
+  Pred Events (>= 6.7s): 0
+  Avg GT Duration: 43.70s, Avg Pred Duration: 0.00s
+  Significant Missed Events: 1 (50.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+  Details of Missed Occupancy Events (>= 6.7s):
+    1. Frames 2960-5251 (Duration: 76.4s, Overlap: 7.9%)
+
+= desk =
+Frame-by-frame Accuracy: 0.9913
+Frame-by-frame Precision: 0.9968
+Frame-by-frame Recall: 0.9930
+Frame-by-frame F1 Score: 0.9949
+Temporal IoU: 0.9715
+
+Event Detection Metrics:
+  True Positives: 2
+  False Positives: 0
+  False Negatives: 0
+  Precision: 1.0000
+  Recall: 1.0000
+  F1 Score: 1.0000
+
+Transition Detection Metrics:
+  True Positives: 3
+  False Positives: 6
+  False Negatives: 1
+  Precision: 0.3333
+  Recall: 0.7500
+  F1 Score: 0.4615
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 2
+  Pred Events (>= 6.7s): 2
+  Avg GT Duration: 53.00s, Avg Pred Duration: 53.20s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+== space7 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.6809
+Frame-by-frame Precision: 0.4118
+Frame-by-frame Recall: 0.1417
+Frame-by-frame F1 Score: 0.2109
+Temporal IoU: 0.1033
+
+Event Detection Metrics:
+  True Positives: 0
+  False Positives: 4
+  False Negatives: 1
+  Precision: 0.0000
+  Recall: 0.0000
+  F1 Score: 0.0000
+
+Transition Detection Metrics:
+  True Positives: 0
+  False Positives: 15
+  False Negatives: 2
+  Precision: 0.0000
+  Recall: 0.0000
+  F1 Score: 0.0000
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 1
+  Pred Events (>= 6.7s): 0
+  Avg GT Duration: 22.00s, Avg Pred Duration: 0.00s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+= desk =
+Frame-by-frame Accuracy: 0.9560
+Frame-by-frame Precision: 0.0000
+Frame-by-frame Recall: 0.0000
+Frame-by-frame F1 Score: 0.0000
+Temporal IoU: 0.0000
+
+Event Detection Metrics:
+  True Positives: 0
+  False Positives: 5
+  False Negatives: 0
+  Precision: 0.0000
+  Recall: 0.0000
+  F1 Score: 0.0000
+
+Transition Detection Metrics:
+  True Positives: 1
+  False Positives: 20
+  False Negatives: 0
+  Precision: 0.0476
+  Recall: 1.0000
+  F1 Score: 0.0909
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 0
+  Pred Events (>= 6.7s): 0
+  Avg GT Duration: 0.00s, Avg Pred Duration: 0.00s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+== space8 ==
+
+= chair =
+Frame-by-frame Accuracy: 0.7964
+Frame-by-frame Precision: 0.9255
+Frame-by-frame Recall: 0.7276
+Frame-by-frame F1 Score: 0.8147
+Temporal IoU: 0.6670
+
+Event Detection Metrics:
+  True Positives: 2
+  False Positives: 3
+  False Negatives: 1
+  Precision: 0.4000
+  Recall: 0.6667
+  F1 Score: 0.5000
+
+Transition Detection Metrics:
+  True Positives: 3
+  False Positives: 16
+  False Negatives: 2
+  Precision: 0.1579
+  Recall: 0.6000
+  F1 Score: 0.2500
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 2
+  Pred Events (>= 6.7s): 3
+  Avg GT Duration: 33.55s, Avg Pred Duration: 15.14s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+= desk =
+Frame-by-frame Accuracy: 0.9676
+Frame-by-frame Precision: 0.9950
+Frame-by-frame Recall: 0.9556
+Frame-by-frame F1 Score: 0.9749
+Temporal IoU: 0.9260
+
+Event Detection Metrics:
+  True Positives: 2
+  False Positives: 2
+  False Negatives: 0
+  Precision: 0.5000
+  Recall: 1.0000
+  F1 Score: 0.6667
+
+Transition Detection Metrics:
+  True Positives: 3
+  False Positives: 16
+  False Negatives: 0
+  Precision: 0.1579
+  Recall: 1.0000
+  F1 Score: 0.2727
+
+Occupancy Event Summary:
+  GT Events (>= 6.7s): 2
+  Pred Events (>= 6.7s): 2
+  Avg GT Duration: 35.87s, Avg Pred Duration: 32.83s
+  Significant Missed Events: 0 (0.0% of GT events)
+  Significant False Events: 0 (0.0% of predicted events)
+
+===== COMPLETELY WRONG PREDICTIONS =====
+
+== space1 ==
+  chair: 1213 frames (36.57%)
+  desk: 135 frames (3.30%)
+
+== space2 ==
+  chair: 896 frames (19.64%)
+  desk: 41 frames (0.92%)
+
+== space3 ==
+  chair: 533 frames (18.52%)
+  desk: 221 frames (6.23%)
+
+== space4 ==
+  chair: 242 frames (6.73%)
+  desk: 1 frames (0.03%)
+
+== space5 ==
+  chair: 862 frames (33.76%)
+  desk: 103 frames (4.36%)
+
+== space6 ==
+  chair: 2064 frames (58.55%)
+  desk: 32 frames (0.87%)
+
+== space7 ==
+  chair: 681 frames (31.91%)
+  desk: 225 frames (4.40%)
+
+== space8 ==
+  chair: 684 frames (20.36%)
+  desk: 103 frames (3.24%)
+
+===== SPACE-LEVEL OCCUPANCY METRICS =====
+
+== space1 ==
+  Accuracy: 0.9543
+  Precision: 0.9535
+  Recall: 0.9564
+  F1 Score: 0.9549
+  Completely Wrong: 240 frames (4.57%)
+
+== space2 ==
+  Accuracy: 0.8763
+  Precision: 0.8490
+  Recall: 0.9796
+  F1 Score: 0.9096
+  Completely Wrong: 650 frames (12.37%)
+
+== space3 ==
+  Accuracy: 0.8820
+  Precision: 0.8214
+  Recall: 0.8404
+  F1 Score: 0.8308
+  Completely Wrong: 620 frames (11.80%)
+
+== space4 ==
+  Accuracy: 0.9815
+  Precision: 0.9669
+  Recall: 0.9961
+  F1 Score: 0.9813
+  Completely Wrong: 97 frames (1.85%)
+
+== space5 ==
+  Accuracy: 0.8831
+  Precision: 0.8782
+  Recall: 0.8689
+  F1 Score: 0.8735
+  Completely Wrong: 614 frames (11.69%)
+
+== space6 ==
+  Accuracy: 0.9061
+  Precision: 0.9872
+  Recall: 0.8781
+  F1 Score: 0.9295
+  Completely Wrong: 493 frames (9.39%)
+
+== space7 ==
+  Accuracy: 0.8784
+  Precision: 0.5216
+  Recall: 0.3833
+  F1 Score: 0.4419
+  Completely Wrong: 639 frames (12.16%)
+
+== space8 ==
+  Accuracy: 0.9916
+  Precision: 0.9875
+  Recall: 0.9941
+  F1 Score: 0.9908
+  Completely Wrong: 44 frames (0.84%)
+
+===== OVERALL SPACE-LEVEL PERFORMANCE =====
+Average Space Accuracy: 0.9192 (±0.0457)
+Average Space Precision: 0.8707 (±0.1450)
+Average Space Recall: 0.8621 (±0.1898)
+Average Space F1 Score: 0.8640 (±0.1673)
+
+Space-level results saved to space_level_confusion_matrices.png
+
+===== OVERALL EVENT DETECTION PERFORMANCE =====
+Events considered significant: >= 6.7 seconds
+Total significant GT occupancy events: 27
+Total significant missed events: 3 (11.1%)
+Total significant false events: 1

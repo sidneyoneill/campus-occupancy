@@ -7,7 +7,7 @@ from collections import defaultdict
 def visualize_ground_truth():
     # Configuration
     video_path = "data/videos/video_1.MOV"  # Update with your video path
-    ground_truth_json = "annotations/ground_truth.json"
+    ground_truth_json = "annotations/ground_truth_2.json"
     annotations_json = "annotations/annotations.json"
     output_video_path = "output/ground_truth_visualization.mp4"
     
