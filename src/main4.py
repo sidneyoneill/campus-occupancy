@@ -15,10 +15,11 @@ from ultralytics import YOLO
 CONFIG = {
     # Input/Output Paths
     "video_path": "data/videos/video_1.MOV",
-    "output_path": "output/combined_occupancy_3.MOV",
+    "output_path": "output/combined_occupancy_6.MOV",
     "roi_path": "annotations/chair_locations_2.json",
     "desk_roi_path": "annotations/annotations_only_desk.json",
     "baseline_image_path": "data/images/base/frame_1334.jpg",  # Empty reference frame for desk detection
+    "json_output_path": "output/detection_results_6.json",  # New path for JSON output
     
     # Processing Parameters
     "resize_factor": 0.5,          # To speed up processing
@@ -373,6 +374,85 @@ def map_seats_to_spaces(chair_rois, desk_annotations):
     
     return space_mapping
 
+# New function to initialize the occupancy timeline structure
+def initialize_occupancy_timeline():
+    """
+    Initialize a data structure to track occupancy changes over time.
+    Returns a dictionary matching the ground truth format.
+    """
+    return {
+        "video_name": os.path.basename(CONFIG["video_path"]),
+        "fps": 0,  # Will be updated with actual FPS during processing
+        "total_frames": 0,  # Will be updated at the end of processing
+        "annotations": defaultdict(lambda: {"chair": [], "desk": []})
+    }
+
+# New function to record occupancy changes
+def record_occupancy_change(timeline, space_id, object_type, frame_num, occupied):
+    """
+    Record a change in occupancy for a chair or desk.
+    
+    Args:
+        timeline: The occupancy timeline data structure
+        space_id: The ID of the space (e.g., "space1")
+        object_type: Either "chair" or "desk"
+        frame_num: The frame number where the change occurred
+        occupied: Boolean indicating if the object is now occupied or not
+    """
+    # Convert any NumPy types to Python native types
+    frame_num = int(frame_num)
+    occupied = bool(occupied)  # Converts np.bool_ to Python bool
+    
+    # Get the list of segments for this space and object type
+    segments = timeline["annotations"][space_id][object_type]
+    
+    # If this is the first change, create a segment starting from frame 1
+    if not segments:
+        segments.append({
+            "start_frame": 1,
+            "end_frame": frame_num - 1,
+            "occupied": not occupied  # The previous state was the opposite
+        })
+    
+    # Add the new segment starting from this frame
+    # The end_frame will be updated when the next change occurs or at the end of processing
+    segments.append({
+        "start_frame": frame_num,
+        "end_frame": frame_num,  # Temporary, will be updated later
+        "occupied": occupied
+    })
+
+# New function to update the end frame of the current segments
+def update_segment_end_frames(timeline, current_frame):
+    """
+    Update the end frame of all current segments to the current frame.
+    """
+    for space_id, objects in timeline["annotations"].items():
+        for object_type, segments in objects.items():
+            if segments:  # If there are any segments
+                segments[-1]["end_frame"] = current_frame
+
+# New function to finalize the timeline by removing any invalid segments
+def finalize_timeline(timeline, total_frames):
+    """
+    Finalize the timeline by setting the total frames and 
+    removing any segments with the same start and end frame.
+    """
+    timeline["total_frames"] = total_frames
+    
+    # Convert defaultdict to regular dict for JSON serialization
+    timeline["annotations"] = dict(timeline["annotations"])
+    
+    # Process each space
+    for space_id, objects in timeline["annotations"].items():
+        for object_type, segments in objects.items():
+            # Remove any segments where start == end (no real duration)
+            objects[object_type] = [seg for seg in segments if seg["start_frame"] < seg["end_frame"]]
+            
+            # Ensure the last segment extends to the end of the video
+            if objects[object_type]:
+                objects[object_type][-1]["end_frame"] = total_frames
+
 # -----------------------------
 # Main Processing Function
 # -----------------------------
@@ -384,6 +464,7 @@ def process_video():
     chair_roi_path = CONFIG["roi_path"]
     desk_roi_path = CONFIG["desk_roi_path"]
     baseline_image_path = CONFIG["baseline_image_path"]
+    json_output_path = CONFIG["json_output_path"]  # New JSON output path
     
     # Load parameters for each detection type
     chair_keyframe_interval = CONFIG["chair_keyframe_interval"]
@@ -440,6 +521,12 @@ def process_video():
     # Initialize combined occupancy status
     space_occupancy = {space_id: False for space_id in space_mapping}
 
+    # Initialize the occupancy timeline
+    occupancy_timeline = initialize_occupancy_timeline()
+    
+    # Track the previous occupancy state to detect changes
+    previous_occupancy = {}
+
     # Initialize video capture and writer
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -447,6 +534,8 @@ def process_video():
         return
 
     fps = cap.get(cv2.CAP_PROP_FPS)
+    occupancy_timeline["fps"] = fps  # Set the actual FPS in our timeline
+    
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     video_writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (frame_width, frame_height))
 
@@ -555,6 +644,35 @@ def process_video():
                     
                     # A space is occupied if either chair or desk is occupied
                     space_occupancy[space_id] = chair_occupied or desk_occupied
+                    
+                    # Check if this is the first frame
+                    if frame_count == 1:
+                        # Initialize previous_occupancy for this space
+                        previous_occupancy[space_id] = {
+                            "chair": chair_occupied,
+                            "desk": desk_occupied
+                        }
+                        
+                        # Record initial state in the timeline
+                        normalized_space_id = space_id.replace("space", "") if space_id.startswith("space") else space_id
+                        record_occupancy_change(occupancy_timeline, f"space{normalized_space_id}", "chair", 1, chair_occupied)
+                        record_occupancy_change(occupancy_timeline, f"space{normalized_space_id}", "desk", 1, desk_occupied)
+                    else:
+                        # Check for changes in chair occupancy
+                        if chair_id and previous_occupancy.get(space_id, {}).get("chair") != chair_occupied:
+                            normalized_space_id = space_id.replace("space", "") if space_id.startswith("space") else space_id
+                            record_occupancy_change(occupancy_timeline, f"space{normalized_space_id}", "chair", frame_count, chair_occupied)
+                            previous_occupancy[space_id]["chair"] = chair_occupied
+                        
+                        # Check for changes in desk occupancy
+                        if desk_id and previous_occupancy.get(space_id, {}).get("desk") != desk_occupied:
+                            normalized_space_id = space_id.replace("space", "") if space_id.startswith("space") else space_id
+                            record_occupancy_change(occupancy_timeline, f"space{normalized_space_id}", "desk", frame_count, desk_occupied)
+                            previous_occupancy[space_id]["desk"] = desk_occupied
+                
+                # Update the end frame of all current segments
+                update_segment_end_frames(occupancy_timeline, frame_count)
+                
             except Exception as e:
                 print(f"Error in desk detection: {e}")
                 import traceback
@@ -643,6 +761,18 @@ def process_video():
 
         # Write the frame to the output video
         video_writer.write(vis_frame)
+
+    # Finalize the timeline and write it to a JSON file
+    finalize_timeline(occupancy_timeline, frame_count)
+    
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(json_output_path), exist_ok=True)
+    
+    # Write the timeline to a JSON file
+    with open(json_output_path, 'w') as f:
+        json.dump(occupancy_timeline, f, indent=2)
+    
+    print(f"Occupancy timeline written to {json_output_path}")
 
     cap.release()
     video_writer.release()
