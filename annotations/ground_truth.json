@@ -1,0 +1,344 @@
+{
+  "video_name": "video_1.MOV",
+  "fps": 29.96662133761899,
+  "total_frames": 5252,
+  "annotations": {
+    "space1": {
+      "chair": [
+        {
+          "start_frame": 1860,
+          "end_frame": 2329,
+          "occupied": true
+        },
+        {
+          "start_frame": 2330,
+          "end_frame": 4579,
+          "occupied": false
+        },
+        {
+          "start_frame": 4580,
+          "end_frame": 5251,
+          "occupied": true
+        }
+      ],
+      "desk": [
+        {
+          "start_frame": 1049,
+          "end_frame": 1443,
+          "occupied": true
+        },
+        {
+          "start_frame": 1444,
+          "end_frame": 2069,
+          "occupied": false
+        },
+        {
+          "start_frame": 2070,
+          "end_frame": 2830,
+          "occupied": true
+        },
+        {
+          "start_frame": 2831,
+          "end_frame": 3958,
+          "occupied": false
+        },
+        {
+          "start_frame": 3959,
+          "end_frame": 5251,
+          "occupied": true
+        }
+      ]
+    },
+    "space2": {
+      "chair": [
+        {
+          "start_frame": 560,
+          "end_frame": 1819,
+          "occupied": true
+        },
+        {
+          "start_frame": 1820,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ],
+      "desk": [
+        {
+          "start_frame": 720,
+          "end_frame": 1048,
+          "occupied": true
+        },
+        {
+          "start_frame": 1049,
+          "end_frame": 1148,
+          "occupied": false
+        },
+        {
+          "start_frame": 1149,
+          "end_frame": 2239,
+          "occupied": true
+        },
+        {
+          "start_frame": 2240,
+          "end_frame": 3039,
+          "occupied": false
+        },
+        {
+          "start_frame": 3040,
+          "end_frame": 4699,
+          "occupied": true
+        },
+        {
+          "start_frame": 4700,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ]
+    },
+    "space3": {
+      "chair": [
+        {
+          "start_frame": 2290,
+          "end_frame": 2669,
+          "occupied": true
+        },
+        {
+          "start_frame": 2670,
+          "end_frame": 3529,
+          "occupied": false
+        },
+        {
+          "start_frame": 3530,
+          "end_frame": 4129,
+          "occupied": true
+        },
+        {
+          "start_frame": 4130,
+          "end_frame": 5101,
+          "occupied": false
+        },
+        {
+          "start_frame": 5102,
+          "end_frame": 5251,
+          "occupied": true
+        }
+      ],
+      "desk": [
+        {
+          "start_frame": 1644,
+          "end_frame": 2399,
+          "occupied": false
+        },
+        {
+          "start_frame": 2400,
+          "end_frame": 3350,
+          "occupied": true
+        },
+        {
+          "start_frame": 3351,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ]
+    },
+    "space4": {
+      "chair": [
+        {
+          "start_frame": 1644,
+          "end_frame": 1609,
+          "occupied": true
+        },
+        {
+          "start_frame": 1610,
+          "end_frame": 1609,
+          "occupied": false
+        },
+        {
+          "start_frame": 1610,
+          "end_frame": 2669,
+          "occupied": true
+        },
+        {
+          "start_frame": 2670,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ],
+      "desk": [
+        {
+          "start_frame": 1496,
+          "end_frame": 4049,
+          "occupied": true
+        },
+        {
+          "start_frame": 4050,
+          "end_frame": 4920,
+          "occupied": false
+        },
+        {
+          "start_frame": 4921,
+          "end_frame": 4921,
+          "occupied": true
+        },
+        {
+          "start_frame": 4922,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ]
+    },
+    "space5": {
+      "chair": [
+        {
+          "start_frame": 2660,
+          "end_frame": 3719,
+          "occupied": true
+        },
+        {
+          "start_frame": 3720,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ],
+      "desk": [
+        {
+          "start_frame": 2830,
+          "end_frame": 2949,
+          "occupied": true
+        },
+        {
+          "start_frame": 2950,
+          "end_frame": 2829,
+          "occupied": false
+        },
+        {
+          "start_frame": 2830,
+          "end_frame": 3039,
+          "occupied": true
+        },
+        {
+          "start_frame": 3040,
+          "end_frame": 3289,
+          "occupied": false
+        },
+        {
+          "start_frame": 3290,
+          "end_frame": 4769,
+          "occupied": true
+        },
+        {
+          "start_frame": 4770,
+          "end_frame": 4921,
+          "occupied": false
+        },
+        {
+          "start_frame": 4922,
+          "end_frame": 5251,
+          "occupied": true
+        }
+      ]
+    },
+    "space6": {
+      "chair": [
+        {
+          "start_frame": 1660,
+          "end_frame": 1989,
+          "occupied": true
+        },
+        {
+          "start_frame": 1990,
+          "end_frame": 2959,
+          "occupied": false
+        },
+        {
+          "start_frame": 2960,
+          "end_frame": 5251,
+          "occupied": true
+        }
+      ],
+      "desk": [
+        {
+          "start_frame": 1552,
+          "end_frame": 2959,
+          "occupied": true
+        },
+        {
+          "start_frame": 2960,
+          "end_frame": 3179,
+          "occupied": false
+        },
+        {
+          "start_frame": 3180,
+          "end_frame": 4951,
+          "occupied": true
+        },
+        {
+          "start_frame": 4952,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ]
+    },
+    "space7": {
+      "chair": [
+        {
+          "start_frame": 3070,
+          "end_frame": 3729,
+          "occupied": true
+        },
+        {
+          "start_frame": 3730,
+          "end_frame": 5251,
+          "occupied": false
+        }
+      ],
+      "desk": []
+    },
+    "space8": {
+      "chair": [
+        {
+          "start_frame": 1799,
+          "end_frame": 3129,
+          "occupied": true
+        },
+        {
+          "start_frame": 3130,
+          "end_frame": 3349,
+          "occupied": false
+        },
+        {
+          "start_frame": 3350,
+          "end_frame": 3470,
+          "occupied": true
+        },
+        {
+          "start_frame": 3471,
+          "end_frame": 4569,
+          "occupied": false
+        },
+        {
+          "start_frame": 4570,
+          "end_frame": 5251,
+          "occupied": true
+        }
+      ],
+      "desk": [
+        {
+          "start_frame": 2010,
+          "end_frame": 3449,
+          "occupied": true
+        },
+        {
+          "start_frame": 3450,
+          "end_frame": 4539,
+          "occupied": false
+        },
+        {
+          "start_frame": 4540,
+          "end_frame": 5251,
+          "occupied": true
+        }
+      ]
+    }
+  }
+}
