@@ -171,8 +171,8 @@ def plot_accuracy_by_space(metrics, output_path):
 
 def main():
     # Input and output paths
-    evaluation_file = "output/evaluation_results_main6_v5.txt"
-    output_dir = "accuracy_visuals_main6_v5"
+    evaluation_file = "output/evaluation_results_main6_v8.txt"
+    output_dir = "accuracy_visuals_main6_v8"
     
     # Create output directory if it doesn't exist
     if not os.path.exists(output_dir):

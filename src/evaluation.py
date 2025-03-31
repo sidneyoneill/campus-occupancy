@@ -510,11 +510,11 @@ def summarize_occupancy_events(gt_intervals, pred_intervals, overlap_threshold=0
 
 def main():
     # Define output path at the top of the function
-    output_file_path = "output/evaluation_results_main6_v7.txt"
+    output_file_path = "output/evaluation_results_main6_v8.txt"
     
     # Load the ground truth and detection result data
     ground_truth_path = "annotations/ground_truth_2.json"
-    detection_results_path = "output/detection_results_main6_v7.json"
+    detection_results_path = "output/detection_results_main6_v8.json"
     
     # Define significance thresholds (configurable)
     min_event_duration_frames = 500  # 1 second at 30fps - events shorter than this are ignored
