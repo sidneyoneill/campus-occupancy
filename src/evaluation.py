@@ -19,6 +19,13 @@ def create_frame_occupation_array(annotations, total_frames, space_id, furniture
     if space_id not in annotations or furniture_type not in annotations[space_id]:
         return occupation
     
+    # Special case: If the furniture array is empty, it's never occupied
+    if annotations[space_id][furniture_type] == []:
+        # Fill all frames with False (unoccupied)
+        for frame in range(1, total_frames + 1):
+            occupation[frame] = False
+        return occupation
+    
     # Fill occupation array based on annotation intervals
     for interval in annotations[space_id][furniture_type]:
         start = interval["start_frame"]
@@ -502,14 +509,17 @@ def summarize_occupancy_events(gt_intervals, pred_intervals, overlap_threshold=0
     }
 
 def main():
+    # Define output path at the top of the function
+    output_file_path = "output/evaluation_results_main6_v7.txt"
+    
     # Load the ground truth and detection result data
     ground_truth_path = "annotations/ground_truth_2.json"
-    detection_results_path = "output/detection_results_6.json"
+    detection_results_path = "output/detection_results_main6_v7.json"
     
     # Define significance thresholds (configurable)
     min_event_duration_frames = 500  # 1 second at 30fps - events shorter than this are ignored
     min_event_duration_seconds = min_event_duration_frames / 30.0
-    overlap_threshold = 0.3  # 10% overlap threshold for missed/false events
+    overlap_threshold = 0.7  # 10% overlap threshold for missed/false events
     
     # Parse command line arguments if needed
     parser = argparse.ArgumentParser(description='Evaluate occupancy detection performance')
@@ -519,7 +529,7 @@ def main():
                         help='Minimum duration (in seconds) for an event to be considered significant')
     parser.add_argument('--overlap-threshold', type=float, default=overlap_threshold,
                         help='Overlap threshold for missed/false events (0.0-1.0)')
-    parser.add_argument('--output', type=str, default="evaluation_results.txt",
+    parser.add_argument('--output', type=str, default=output_file_path,
                         help='Path to output text file for evaluation results')
     args = parser.parse_args()
     

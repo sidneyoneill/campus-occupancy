@@ -35,25 +35,40 @@ def parse_accuracy_metrics(file_path):
         space_id, accuracy = match
         metrics['space_accuracy'][space_id] = float(accuracy)
     
-    # More robust furniture-level accuracy pattern
-    # This handles variations in the whitespace and format
-    chair_pattern = r"== (space\d+) ==[\s\S]*?= chair =[\s\S]*?Frame-by-frame Accuracy: ([\d\.]+)"
-    chair_matches = re.findall(chair_pattern, content)
-    
-    print(f"Found {len(chair_matches)} chair matches")
-    for match in chair_matches:
-        space_id, accuracy = match
-        if accuracy != "No":
-            metrics['chair_accuracy'][space_id] = float(accuracy)
-    
-    desk_pattern = r"== (space\d+) ==[\s\S]*?= desk =[\s\S]*?Frame-by-frame Accuracy: ([\d\.]+)"
-    desk_matches = re.findall(desk_pattern, content)
-    
-    print(f"Found {len(desk_matches)} desk matches")
-    for match in desk_matches:
-        space_id, accuracy = match
-        if accuracy != "No":
-            metrics['desk_accuracy'][space_id] = float(accuracy)
+    # More specific pattern for furniture-level accuracy that handles exact framing
+    # This looks for Frame-by-frame Accuracy: followed by a decimal number
+    for space_id in metrics['space_accuracy'].keys():
+        # Find sections for each space
+        space_section_pattern = f"== {space_id} ==([\\s\\S]*?)(?:== space|$)"
+        space_section_match = re.search(space_section_pattern, content)
+        
+        if space_section_match:
+            space_content = space_section_match.group(1)
+            
+            # Find chair and desk subsections
+            chair_section_pattern = r"= chair =([\s\S]*?)(?:= desk =|$)"
+            chair_section_match = re.search(chair_section_pattern, space_content)
+            
+            desk_section_pattern = r"= desk =([\s\S]*?)(?:$)"
+            desk_section_match = re.search(desk_section_pattern, space_content)
+            
+            # Extract chair accuracy
+            if chair_section_match:
+                chair_content = chair_section_match.group(1)
+                chair_accuracy_pattern = r"Frame-by-frame Accuracy: ([\d\.]+)"
+                chair_accuracy_match = re.search(chair_accuracy_pattern, chair_content)
+                
+                if chair_accuracy_match and "No valid" not in chair_content[:50]:
+                    metrics['chair_accuracy'][space_id] = float(chair_accuracy_match.group(1))
+            
+            # Extract desk accuracy
+            if desk_section_match:
+                desk_content = desk_section_match.group(1)
+                desk_accuracy_pattern = r"Frame-by-frame Accuracy: ([\d\.]+)"
+                desk_accuracy_match = re.search(desk_accuracy_pattern, desk_content)
+                
+                if desk_accuracy_match and "No valid" not in desk_content[:50]:
+                    metrics['desk_accuracy'][space_id] = float(desk_accuracy_match.group(1))
     
     # Print what we found for debugging
     print("Chair accuracies:", metrics['chair_accuracy'])
@@ -156,8 +171,8 @@ def plot_accuracy_by_space(metrics, output_path):
 
 def main():
     # Input and output paths
-    evaluation_file = "evaluation_results_6.txt"
-    output_dir = "accuracy_visuals"
+    evaluation_file = "output/evaluation_results_main6_v5.txt"
+    output_dir = "accuracy_visuals_main6_v5"
     
     # Create output directory if it doesn't exist
     if not os.path.exists(output_dir):
